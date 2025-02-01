@@ -11,7 +11,7 @@ class TempPublisher(Node):
         self.publisher_ = self.create_publisher(Float64, 'capt_temp', 10)
         timer_period = 0.5  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)
-       	self.val = 25.5
+        self.val = 25.5
 
     def timer_callback(self):
         msg = Float64()
@@ -19,9 +19,9 @@ class TempPublisher(Node):
         self.publisher_.publish(msg)
         self.get_logger().info('Publishing: "%s"' % msg.data)
         if (self.val <= 30):
-        	self.val += 2.0
+             self.val += 2.0
         else:
-        	self.val = 17.5
+            self.val = 17.5
 
 
 def main(args=None):
