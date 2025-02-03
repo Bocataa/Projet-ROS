@@ -1,41 +1,31 @@
 import rclpy
 from rclpy.node import Node
+from std_srvs.srv import Trigger
 
-from std_msgs.msg import Float64
-
-
-class SERVO(Node):
+class ServoServer(Node):
 
     def __init__(self):
-        super().__init__('servoMoteur')
-        self.subscription = self.create_subscription(
-            Float64,
-            'capt_temp',
-            self.listener_callback,
-            10)
-        self.subscription  # prevent unused variable warning
-        self.AngleServoDeg = 0
+        super().__init__('servo_server')
+        
+        # Création du service ROS2
+        self.srv = self.create_service(Trigger, 'set_servo_state', self.set_servo_callback)
+        self.angle_servo = 0  # Angle initial du servo
 
-    def listener_callback(self, msg):
-    	valTemp = msg.data
-    	self.AngleServoDeg = (90*valTemp)/30
-    		
-    	self.get_logger().info('AngleServo : "%s"' % self.AngleServoDeg)
-
+    def set_servo_callback(self, request, response):
+        # Callback du service : modifie l'angle du servo
+        self.angle_servo = 90 if self.angle_servo == 0 else 0
+        response.success = True
+        response.message = f"Servo ajusté à {self.angle_servo}°"
+        self.get_logger().info(response.message)
+        return response
 
 def main(args=None):
     rclpy.init(args=args)
-
-    servoMot = SERVO()
-
-    rclpy.spin(servoMot)
-
-    # Destroy the node explicitly
-    # (optional - otherwise it will be done automatically
-    # when the garbage collector destroys the node object)
-    servoMot.destroy_node()
+    servo_server = ServoServer()
+    rclpy.spin(servo_server)
+    servo_server.destroy_node()
     rclpy.shutdown()
-
 
 if __name__ == '__main__':
     main()
+

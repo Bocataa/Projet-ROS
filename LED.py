@@ -1,39 +1,42 @@
 import rclpy
 from rclpy.node import Node
+from std_msgs.msg import Float64, Bool
 
-from std_msgs.msg import Bool
-
-
-class LED(Node):
+class LEDSubscriber(Node):
 
     def __init__(self):
-        super().__init__('led')
+        super().__init__('led_subscriber')
+        
+        # Subscriber pour recevoir la température
         self.subscription = self.create_subscription(
-            Bool,
-            'bp1',
+            Float64,
+            'capt_temp',
             self.listener_callback,
             10)
-        self.subscription  # prevent unused variable warning
-        self.ledState = 0
+        self.subscription
+
+        # Publisher pour envoyer l'état de la LED
+        self.publisher_ = self.create_publisher(Bool, 'led_state', 10)
 
     def listener_callback(self, msg):
-        self.ledState = msg.data
-        self.get_logger().info('Etat LED : "%s"' % self.ledState)
+        # Callback déclenché lorsqu'une nouvelle température est reçue
+        temp = msg.data
+        led_state = temp >= 23  # Allume la LED si température ≥ 28°C
 
+        # Publication de l'état de la LED
+        msg_led = Bool()
+        msg_led.data = led_state
+        self.publisher_.publish(msg_led)
+        state_str = "ON" if led_state else "OFF"
+        self.get_logger().info(f'Temp: {temp}°C -> LED: {state_str}')
 
 def main(args=None):
     rclpy.init(args=args)
-
-    led = LED()
-
-    rclpy.spin(led)
-
-    # Destroy the node explicitly
-    # (optional - otherwise it will be done automatically
-    # when the garbage collector destroys the node object)
-    led.destroy_node()
+    led_subscriber = LEDSubscriber()
+    rclpy.spin(led_subscriber)
+    led_subscriber.destroy_node()
     rclpy.shutdown()
-
 
 if __name__ == '__main__':
     main()
+
