@@ -11,7 +11,7 @@ class ServoServer(Node):
         self.srv = self.create_service(Trigger, 'set_servo_state', self.set_servo_callback)
         self.angle_servo = 0  # Angle initial du servo
 
-    def set_servo_callback(self, request, response):
+    def set_servo_callback(self, request,response):
         # Callback du service : modifie l'angle du servo
         self.angle_servo = 90 if self.angle_servo == 0 else 0
         response.success = True

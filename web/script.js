@@ -1,33 +1,20 @@
 async function fetchTemp() {
-    const response = await fetch("/get_temp");
+    const response = await fetch("http://127.0.0.1:5000/temp");
     const data = await response.json();
     const temp = data.temperature;
     document.getElementById("temp-value").innerHTML = "Température : " + temp + " °C";
 }
 
-async function fetchHumidity() {
-    const response = await fetch("/get_humidity");
+async function fetchServoAngle() {
+    const response = await fetch("http://127.0.0.1:5000/servoAngle");
     const data = await response.json();
-    const humidity = data.humidity;
-    document.getElementById("humidity-value").innerHTML = "Humidité : " + humidity + " %";
+    const angle = data.servoAngle;
+    document.getElementById("servo-value").innerHTML = "Angle actuel : " + angle + " °";
 }
 
-async function fetchLight() {
-    const response = await fetch("/get_light");
-    const data = await response.json();
-    const light = data.light_level;
-    document.getElementById("light-value").innerHTML = "Luminosité : " + light + " lux";
-}
-
-async function fetchButtonState() {
-    const response = await fetch("/get_button_state");
-    const data = await response.json();
-    const buttonState = data.button_state ? "Actif" : "Inactif";
-    document.getElementById("bp-status").innerHTML = "État du bouton : " + buttonState;
-}
 
 async function toggleButton() {
-    const response = await fetch("/get_button_state");
+    const response = await fetch("http://127.0.0.1:5000/get_button_state");
     const data = await response.json();
     const newState = !data.button_state;
 
@@ -73,12 +60,9 @@ async function controlServo() {
 
 // fetch les données toutes les secondes
 setInterval(fetchTemp, 1000);
-setInterval(fetchHumidity, 1000);
-setInterval(fetchLight, 1000);
-setInterval(fetchButtonState, 1000);
+setInterval(fetchServoAngle, 1000);
 
 // Event listeners
-document.getElementById("bp-button").addEventListener("click", toggleButton);
 document.getElementById("led-toggle").addEventListener("change", toggleLED);
 document.getElementById("servo-submit").addEventListener("click", controlServo);
 

@@ -1,6 +1,8 @@
 import rclpy
 from rclpy.node import Node
 from std_srvs.srv import Trigger
+
+#Interruption clavier
 import sys
 import termios
 import tty
@@ -16,26 +18,26 @@ class BP1Client(Node):
 
         # Attente de la disponibilité du service
         while not self.cli.wait_for_service(timeout_sec=1.0):
-            self.get_logger().warn('Service Servo non disponible, attente...')
+            self.get_logger().warn('Service Servo non disponible, attente...') #.warn permet de changer la coloration du text terminal
 
         # Initialisation du mode simulation clavier
         self.button_state = False  # État initial du bouton
 
     def send_request(self):
-        """Envoi d'une requête au serveur du servo moteur"""
+        # Envoi d'une requête au serveur du servo moteur
         req = Trigger.Request()
         future = self.cli.call_async(req)
         future.add_done_callback(self.response_callback)
 
     def response_callback(self, future):
-        """Réception de la réponse du serveur"""
+        # Réception de la réponse du serveur
         try:
             response = future.result()
             self.get_logger().info(f"Réponse du servo : {response.message}")
-        except Exception as e:
-            self.get_logger().error(f"Échec de la requête : {str(e)}")
+        except Exception:
+            self.get_logger().error(f"Échec de la requête : {str(Exception)}")
 
-	# Fonction pompée sur internet pour récupéré la presion touche clavier
+	# Fonction pompée sur internet pour récupérer la presion touche clavier
     def keyboard_listener(self):
         # Écoute le clavier pour détecter la touche Espace
         self.get_logger().info("Appuyez sur ESPACE pour simuler le bouton (CTRL+C pour quitter)")

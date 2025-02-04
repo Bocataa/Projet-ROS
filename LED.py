@@ -8,12 +8,8 @@ class LEDSubscriber(Node):
         super().__init__('led_subscriber')
         
         # Subscriber pour recevoir la température
-        self.subscription = self.create_subscription(
-            Float64,
-            'capt_temp',
-            self.listener_callback,
-            10)
-        self.subscription
+        self.subscription = self.create_subscription(Float64,'capt_temp',self.listener_callback, 10)
+        
 
         # Publisher pour envoyer l'état de la LED
         self.publisher_ = self.create_publisher(Bool, 'led_state', 10)
