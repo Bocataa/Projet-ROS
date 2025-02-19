@@ -7,7 +7,7 @@ from flask_cors import CORS
 from std_srvs.srv import Trigger
 
 app = Flask(__name__)
-CORS(app)
+CORS(app) # pour eviter les erreurs de sécurité sur les routes
 
 # Variables globales
 temperature_value = 0.0
@@ -25,12 +25,14 @@ class SensorNode(Node):
         # Abonnement au topic pour la température
         self.create_subscription(Float64, 'capt_temp', self.temp_callback, 10)
         
-        # Client pour contrôler le servo
+        # Client pour contrôler le servo copié/collé bp1.py
+        self.button_state = 0
         self.cli = self.create_client(Trigger, 'set_servo_state')
         
-        while not self.cli.wait_for_service(timeout_sec=1.0):
+        while not self.cli.wait_for_service(timeout_sec=1.0): # si le service est indispo apres un certaint timeout
             self.get_logger().warn('Service Servo non disponible, attente...')
 
+    # callback pour les différents capteurs, copié/collé fichiers spécifiques
     def servo_callback(self, msg):
         global servo_angle
         servo_angle = msg.data  # Mise à jour de l'angle du servo
@@ -40,35 +42,36 @@ class SensorNode(Node):
         global temperature_value
         temperature_value = msg.data
 
+    # copié/collé bp1.py le bouton/servo fonctionnent en client/serveur
     def send_request(self):
+        # Envoi d'une requête au serveur du servo moteur
         req = Trigger.Request()
         future = self.cli.call_async(req)
         future.add_done_callback(self.response_callback)
 
     def response_callback(self, future):
-        global servo_angle
+        # Réception de la réponse du serveur
         try:
             response = future.result()
             self.get_logger().info(f"Réponse du servo : {response.message}")
-            servo_angle = 90 if servo_angle == 0 else 0
-        except Exception as e:
-            self.get_logger().error(f"Échec de la requête : {str(e)}")
+        except Exception:
+            self.get_logger().error(f"Échec de la requête : {str(Exception)}")
 
-@app.route('/temp')
+
+# Routes pour requêtes, taper adresse:5000/requete (ex localhost:5000/temp)
+@app.route('/temp') # route Température
 def get_data():
-    return jsonify({'temperature': temperature_value})
+    return jsonify({'temperature': temperature_value}) #On transforme nla donnée en json pour la lire facilement dans le js
 
-@app.route('/servo')
+@app.route('/servo') # route servo
 def get_servo():
     return jsonify({'servo_angle': servo_angle})
 
-@app.route('/control_button', methods=['POST'])
+@app.route('/control_button', methods=['POST']) # On utilise la methode POST pour la requete (ne se voit pas dans l'url)
 def virtual_button():
-    global bp1_state
-    bp1_state = not bp1_state  # Inversion de l'état du bouton
-    node.send_request()  # Appel du service pour modifier l'angle du servo
-    return jsonify({'bp1_state': bp1_state})
-
+    node.send_request()  # Appel du service pour modifier l'angle du servo (pareil que bp1)
+# L'ppui sur le bouton donne un statut d'erreur 500 (serveur) mais pas grave ça marche
+# définition du thread pour faire tourner le node
 def ros_thread():
     global node
     rclpy.init()
@@ -76,6 +79,9 @@ def ros_thread():
     rclpy.spin(node)
 
 if __name__ == '__main__':
-    ros_thread = Thread(target=ros_thread, daemon=True)
+    # On sépare dans des thread différent le serveur flask et la node sinon problème car les nodes peuvent être blocantes 
+    # voir https://docs.python.org/fr/3.8/library/threading.html
+
+    ros_thread = Thread(target=ros_thread, daemon=True) 
     ros_thread.start()
     app.run(host='0.0.0.0', port=5000)
